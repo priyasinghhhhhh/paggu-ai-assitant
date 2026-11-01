@@ -1,0 +1,138 @@
+# python
+import pyttsx3
+from datetime import datetime
+import ast
+import operator
+import random
+import time
+
+# Calculator operations
+operations = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
+    ast.Mod: operator.mod,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos
+}
+
+
+# Speak function
+def speak(text):
+    print("Paggu:", text)
+
+    try:
+        engine = pyttsx3.init()
+        engine.setProperty("rate", 165)
+        engine.setProperty("volume", 1.0)
+
+        engine.say(text)
+        engine.runAndWait()
+        engine.stop()
+
+        time.sleep(0.3)
+
+    except Exception as error:
+        print("Speech error:", error)
+
+
+# Calculator function
+def calculate(expression):
+    def evaluate(node):
+        if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+            return node.value
+
+        if isinstance(node, ast.BinOp) and type(node.op) in operations:
+            return operations[type(node.op)](
+                evaluate(node.left),
+                evaluate(node.right)
+            )
+
+        if isinstance(node, ast.UnaryOp) and type(node.op) in operations:
+            return operations[type(node.op)](evaluate(node.operand))
+
+        raise ValueError("Invalid calculation")
+
+    tree = ast.parse(expression, mode="eval")
+    return evaluate(tree.body)
+
+
+# Paggu response system
+def respond(user_input):
+    text = user_input.lower().strip()
+
+    if any(word in text for word in ["hello", "hi", "hey"]):
+        return "Hello! I am Paggu. How can I help you?"
+
+    elif "your name" in text or "who are you" in text:
+        return "My name is Paggu. I am your personal Python AI assistant."
+
+    elif "how are you" in text:
+        return "I am doing great! Thanks for asking."
+
+    elif "who made you" in text or "who created you" in text:
+        return "I was created using Python. You can call me Paggu!"
+
+    elif "time" in text:
+        return "The current time is " + datetime.now().strftime("%I:%M %p")
+
+    elif "date" in text or "today" in text:
+        return "Today's date is " + datetime.now().strftime("%d %B %Y")
+
+    elif text.startswith("calculate"):
+        expression = text[len("calculate"):].strip()
+
+        try:
+            result = calculate(expression)
+            return "The answer is " + str(result)
+
+        except ZeroDivisionError:
+            return "You cannot divide by zero."
+
+        except Exception:
+            return "Sorry, I could not calculate that."
+
+    elif "joke" in text:
+        return random.choice([
+            "Why did the computer go to the doctor? It had a virus!",
+            "Why do programmers love computers? Because they understand them!",
+            "What is a computer's favorite snack? Microchips!"
+        ])
+
+    elif "thank" in text:
+        return "You're welcome! Paggu is happy to help."
+
+    elif text in ["exit", "quit", "bye", "goodbye"]:
+        return "Goodbye! This is Paggu signing off."
+
+    else:
+        return "I am Paggu. Sorry, I don't know how to answer that yet."
+
+
+# Start Paggu
+speak(
+    "Hello! My name is Paggu. I am your Python AI assistant. "
+    "How can I help you today?"
+)
+
+
+# Main conversation loop
+while True:
+    try:
+        user_input = input("You: ").strip()
+
+        if not user_input:
+            continue
+
+        response = respond(user_input)
+        speak(response)
+
+        if user_input.lower() in ["exit", "quit", "bye", "goodbye"]:
+            break
+
+    except KeyboardInterrupt:
+        speak("Goodbye! This is Paggu signing off.")
+        break
+        
